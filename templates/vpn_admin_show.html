@@ -1,16 +1,18 @@
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="/static/css/style.css" />
-<link rel="stylesheet" type="text/css" href="/static/css/table_style.css" />
+{% extends "base.html" %}
+{% block page %}
 <div class="div"><p>VPN账号查询结果:</p></div>
-<div>
+<div style="padding-top: 12%;padding-left:43%">
  <table class="datalist" border="1">
     <tr>
         <td>账号</td><td>密码</td>
     </tr>
-    {% for user in user_list %}
+    {% for val in user_list %}
         <tr class="altrow">
-            <td>{{ user[0] }}</td><td>{{ user[1] }}</td>
+            {% for va in val %}
+                <td>{{ va }}</td>
+            {% endfor %}
         </tr>
     {% endfor %}
  </table>
 </div>
+{% endblock page %}

@@ -137,6 +137,19 @@ class svn_permission(DB.Model):
         values=(self.groups,self.path,self.permission)
         return '%s,%s,%s'%values
 
+class svn_groups(DB.Model):
+    __tablename__ = 'svn_groups'
+    __bind_key__='op'
+    id = DB.Column(DB.Integer, primary_key=True,autoincrement=True)
+    groups = DB.Column(DB.String(50))
+    users = DB.Column(DB.String(50))
+    def __init__(self,groups,users):
+        self.groups = groups
+        self.users = users
+    def __repr__(self):
+        values=(self.groups,self.users)
+        return '%s,%s'%values
+
 class sql_scheduler(DB.Model):
     __tablename__ = 'sql_scheduler'
     __bind_key__='op'
@@ -146,7 +159,7 @@ class sql_scheduler(DB.Model):
     db = DB.Column(DB.String(50))
     time = DB.Column(DB.String(20))
     sql_cmd = DB.Column(DB.String(1000))
-    status = DB.Column(DB.Enum('未执行','已执行'))
+    status = DB.Column(DB.String(20))
     results = DB.Column(DB.String(1000))
     def __init__(self,master_ip,master_port,db,time,sql_cmd,status,results):
         self.master_ip = master_ip
@@ -165,7 +178,7 @@ class rota(DB.Model):
     __bind_key__='op'
     id = DB.Column(DB.Integer, primary_key=True,autoincrement=True)
     name = DB.Column(DB.String(30))
-    duty = DB.Column(DB.Enum('运维值班','报警值班'))
+    duty = DB.Column(DB.String(20))
     date = DB.Column(DB.String(30))
     def __init__(self,name,duty,date):
         self.name = name
@@ -250,7 +263,7 @@ class publish_code(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True, autoincrement=True)
     project = DB.Column(DB.String(100))
     code = DB.Column(DB.String(20))
-    platfrom = DB.Column(DB.Enum('线上', '测外'))
+    platfrom = DB.Column(DB.String(20))
     user = DB.Column(DB.String(20))
     Time = DB.Column(DB.String(20))
     def __init__(self,project,code,platfrom,user,Time):
@@ -286,26 +299,126 @@ class dns_innr(DB.Model):
         values = (self.domain,self.field,self.Type, self.ip,self.stats,self.system)
         return '%s,%s,%s,%s,%s,%s' % values
 
-class Scheduler(DB.Model):
-    __tablename__ = 'Scheduler'
+class op_menu(DB.Model):
+    __tablename__ = 'op_menu'
     __bind_key__ = 'op'
     id = DB.Column(DB.Integer, primary_key=True, autoincrement=True)
-    user = DB.Column(DB.String(20))
-    host = DB.Column(DB.String(20))
-    job = DB.Column(DB.String(200))
-    cron = DB.Column(DB.String(50))
-    describe = DB.Column(DB.String(100))
-    lasttime = DB.Column(DB.String(50))
-    job_id = DB.Column(DB.String(200))
-    def __init__(self,user,host,job,cron,describe,lasttime,job_id):
-        self.user = user
-        self.host = host
-        self.job = job
-        self.cron = cron
-        self.describe = describe
-        self.lasttime = lasttime
-        self.job_id = job_id
+    Menu = DB.Column(DB.String(10))
+    Menu_id = DB.Column(DB.Integer)
+    Menu_name = DB.Column(DB.String(10))
+    id_name = DB.Column(DB.String(20))
+    module_name = DB.Column(DB.String(50))
+    action_name = DB.Column(DB.String(50))
+    grade = DB.Column(DB.Integer)
+    def __init__(self,Menu,Menu_id,Menu_name,id_name,module_name,action_name,grade):
+        self.Menu = Menu
+        self.Menu_id = Menu_id
+        self.Menu_name = Menu_name
+        self.id_name = id_name
+        self.module_name = module_name
+        self.action_name = action_name
+        self.grade = grade
 
     def __repr__(self):
-        values = (self.user,self.host,self.job,self.cron, self.describe,self.lasttime,self.job_id)
+        values = (self.Menu,self.Menu_id,self.Menu_name,self.id_name,self.module_name,self.action_name,self.grade)
         return '%s,%s,%s,%s,%s,%s,%s' % values
+
+class apscheduler_jobs(DB.Model):
+    __tablename__ = 'apscheduler_jobs'
+    __bind_key__ = 'op'
+    id = DB.Column(DB.String(200),primary_key=True)
+    next_run_time = DB.Column(DB.BigInteger)
+    job_state = DB.Column(DB.BLOB)
+    def __init__(self,id,next_run_time,job_state):
+        self.id = id
+        self.next_run_time = next_run_time
+        with open(job_state,'rb') as f:
+            self.job_state = f.read()
+    def __repr__(self):
+        values = (self.id,self.next_run_time,self.job_state)
+        return '%s,%s,%r' % values
+
+class haproxy_blacklist(DB.Model):
+    __tablename__ = 'haproxy_blacklist'
+    __bind_key__='op'
+    id = DB.Column(DB.Integer, primary_key=True,autoincrement=True)
+    addtime = DB.Column(DB.String(30))
+    ip = DB.Column(DB.String(16))
+    stats = DB.Column(DB.Enum('0','1'))
+    expire = DB.Column(DB.String(30))
+    rule = DB.Column(DB.String(100))
+    def __init__(self,addtime,ip,stats,expire,rule):
+        self.addtime = addtime
+        self.ip = ip
+        self.stats = stats
+        self.expire = expire
+        self.rule = rule
+    def __repr__(self):
+        values=(self.addtime,self.ip,self.stats,self.expire,self.rule)
+        return '%s,%s,%s,%s,%s' % values
+
+class vpn_users(DB.Model):
+    __tablename__ = 'vpn_users'
+    __bind_key__='op'
+    id = DB.Column(DB.Integer, primary_key=True,autoincrement=True)
+    user = DB.Column(DB.String(30))
+    password = DB.Column(DB.String(100))
+    status = DB.Column(DB.Integer())
+    vpn_type = DB.Column(DB.Enum('intranet', 'internet'))
+    def __init__(self,user,password,status,vpn_type):
+        self.user = user
+        self.password = password
+        self.status = status
+        self.vpn_type = vpn_type
+    def __repr__(self):
+        values=(self.user,self.password,self.status,self.vpn_type)
+        return '%s,%s,%i,%s'%values
+
+class url_blacklist(DB.Model):
+    __tablename__ = 'url_blacklist'
+    __bind_key__='op'
+    id = DB.Column(DB.Integer, primary_key=True,autoincrement=True)
+    url = DB.Column(DB.String(100))
+    counts = DB.Column(DB.Integer)
+    stats = DB.Column(DB.Enum('0', '1'))
+    def __init__(self,url,counts,stats):
+        self.url = url
+        self.counts = counts
+        self.stats = stats
+    def __repr__(self):
+        values=(self.url,self.counts,self.stats)
+        return '%s,%s,%s' % values
+
+class project_level(DB.Model):
+    __tablename__ = 'project_level'
+    __bind_key__='op'
+    id = DB.Column(DB.Integer, primary_key=True,autoincrement=True)
+    project = DB.Column(DB.String(50),unique=True)
+    level = DB.Column(DB.Enum('1', '2','3', '4','5', '6','7'))
+    def __init__(self,project,level):
+        self.project = project
+        self.level = level
+    def __repr__(self):
+        values=(self.project,self.level)
+        return '%s,%s' % values
+
+class project_apply(DB.Model):
+    __tablename__ = 'project_apply'
+    __bind_key__='op'
+    id = DB.Column(DB.Integer, primary_key=True,autoincrement=True)
+    project = DB.Column(DB.String(50),index=True)
+    types = DB.Column(DB.String(20),index=True)
+    describe = DB.Column(DB.String(500))
+    content = DB.Column(DB.String(500))
+    Rollback = DB.Column(DB.String(500))
+    sender = DB.Column(DB.String(30),index=True)
+    def __init__(self,project,types,describe,content,Rollback,sender):
+        self.project = project
+        self.types = types
+        self.describe = describe
+        self.content = content
+        self.Rollback = Rollback
+        self.sender = sender
+    def __repr__(self):
+        values=(self.project,self.types,self.describe,self.content,self.Rollback,self.sender)
+        return '%s,%s,%s,%s,%s,%s' % values
